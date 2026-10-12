@@ -1,6 +1,6 @@
 #include <iostream>
 #include <vector>
-#include <map>
+#include <unordered_map>
 #include <algorithm>
 using namespace std;
 
@@ -57,7 +57,9 @@ int main() {
         scanf("%d", &n);
         
         vector<Constraint> constraints;
+        constraints.reserve(n);
         vector<int> all_vars;
+        all_vars.reserve(n * 2);
         
         // Read all constraints and collect variables
         for (int k = 0; k < n; k++) {
@@ -72,7 +74,8 @@ int main() {
         sort(all_vars.begin(), all_vars.end());
         all_vars.erase(unique(all_vars.begin(), all_vars.end()), all_vars.end());
         
-        map<int, int> var_to_idx;
+        unordered_map<int, int> var_to_idx;
+        var_to_idx.reserve(all_vars.size() * 2);
         for (int idx = 0; idx < (int)all_vars.size(); idx++) {
             var_to_idx[all_vars[idx]] = idx;
         }
