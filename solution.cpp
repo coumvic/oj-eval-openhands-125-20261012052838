@@ -17,10 +17,11 @@ public:
     }
     
     int find(int x) {
-        if (parent[x] != x) {
-            parent[x] = find(parent[x]);
+        while (parent[x] != x) {
+            parent[x] = parent[parent[x]];  // Path compression
+            x = parent[x];
         }
-        return parent[x];
+        return x;
     }
     
     void unite(int x, int y) {
@@ -49,6 +50,9 @@ struct Constraint {
 };
 
 int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
     int t;
     scanf("%d", &t);
     
@@ -56,16 +60,21 @@ int main() {
         int n;
         scanf("%d", &n);
         
-        vector<Constraint> constraints;
-        constraints.reserve(n);
+        vector<Constraint> equality_constraints;
+        vector<Constraint> inequality_constraints;
         vector<int> all_vars;
-        all_vars.reserve(n * 2);
         
-        // Read all constraints and collect variables
+        // Read all constraints and separate them
         for (int k = 0; k < n; k++) {
             int i, j, e;
             scanf("%d %d %d", &i, &j, &e);
-            constraints.push_back({i, j, e});
+            
+            if (e == 1) {
+                equality_constraints.push_back({i, j, e});
+            } else {
+                inequality_constraints.push_back({i, j, e});
+            }
+            
             all_vars.push_back(i);
             all_vars.push_back(j);
         }
@@ -75,32 +84,27 @@ int main() {
         all_vars.erase(unique(all_vars.begin(), all_vars.end()), all_vars.end());
         
         unordered_map<int, int> var_to_idx;
-        var_to_idx.reserve(all_vars.size() * 2);
         for (int idx = 0; idx < (int)all_vars.size(); idx++) {
             var_to_idx[all_vars[idx]] = idx;
         }
         
         DSU dsu(all_vars.size());
         
-        // First pass: process all equality constraints
-        for (const auto& constraint : constraints) {
-            if (constraint.e == 1) {  // equality constraint
-                int idx_i = var_to_idx[constraint.i];
-                int idx_j = var_to_idx[constraint.j];
-                dsu.unite(idx_i, idx_j);
-            }
+        // Process all equality constraints
+        for (const auto& constraint : equality_constraints) {
+            int idx_i = var_to_idx[constraint.i];
+            int idx_j = var_to_idx[constraint.j];
+            dsu.unite(idx_i, idx_j);
         }
         
-        // Second pass: check all inequality constraints
+        // Check all inequality constraints
         bool possible = true;
-        for (const auto& constraint : constraints) {
-            if (constraint.e == 0) {  // inequality constraint
-                int idx_i = var_to_idx[constraint.i];
-                int idx_j = var_to_idx[constraint.j];
-                if (dsu.same(idx_i, idx_j)) {
-                    possible = false;
-                    break;
-                }
+        for (const auto& constraint : inequality_constraints) {
+            int idx_i = var_to_idx[constraint.i];
+            int idx_j = var_to_idx[constraint.j];
+            if (dsu.same(idx_i, idx_j)) {
+                possible = false;
+                break;
             }
         }
         
