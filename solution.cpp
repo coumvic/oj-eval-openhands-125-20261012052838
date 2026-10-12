@@ -1,4 +1,4 @@
-#include <iostream>
+#include <cstdio>
 #include <vector>
 #include <unordered_map>
 using namespace std;
@@ -43,10 +43,6 @@ public:
     }
 };
 
-struct Constraint {
-    int i, j, e;
-};
-
 int main() {
     int t;
     scanf("%d", &t);
@@ -55,32 +51,27 @@ int main() {
         int n;
         scanf("%d", &n);
         
-        vector<Constraint> equality_constraints;
-        vector<Constraint> inequality_constraints;
+        DSU dsu;
+        vector<pair<pair<int, int>, int>> inequalities;
         
-        // Read all constraints and separate them
+        // Read all constraints
         for (int k = 0; k < n; k++) {
             int i, j, e;
             scanf("%d %d %d", &i, &j, &e);
             
             if (e == 1) {
-                equality_constraints.push_back({i, j, e});
+                dsu.unite(i, j);
             } else {
-                inequality_constraints.push_back({i, j, e});
+                inequalities.push_back({{i, j}, e});
             }
-        }
-        
-        DSU dsu;
-        
-        // Process all equality constraints
-        for (const auto& constraint : equality_constraints) {
-            dsu.unite(constraint.i, constraint.j);
         }
         
         // Check all inequality constraints
         bool possible = true;
-        for (const auto& constraint : inequality_constraints) {
-            if (dsu.same(constraint.i, constraint.j)) {
+        for (const auto& inequality : inequalities) {
+            int i = inequality.first.first;
+            int j = inequality.first.second;
+            if (dsu.same(i, j)) {
                 possible = false;
                 break;
             }
