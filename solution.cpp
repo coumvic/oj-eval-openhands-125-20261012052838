@@ -1,21 +1,22 @@
 #include <cstdio>
 #include <vector>
-#include <unordered_map>
+#include <map>
+#include <algorithm>
 using namespace std;
 
 class DSU {
 private:
-    unordered_map<int, int> parent;
-    unordered_map<int, int> rank;
+    vector<int> parent;
+    vector<int> rank;
     
 public:
-    int find(int x) {
-        if (parent.find(x) == parent.end()) {
-            parent[x] = x;
-            rank[x] = 0;
-            return x;
+    DSU(int n) : parent(n), rank(n, 0) {
+        for (int i = 0; i < n; i++) {
+            parent[i] = i;
         }
-        
+    }
+    
+    int find(int x) {
         if (parent[x] != x) {
             parent[x] = find(parent[x]);
         }
@@ -51,27 +52,49 @@ int main() {
         int n;
         scanf("%d", &n);
         
-        DSU dsu;
-        vector<pair<pair<int, int>, int>> inequalities;
+        vector<pair<int, int>> equalities;
+        vector<pair<int, int>> inequalities;
+        vector<int> all_vars;
         
         // Read all constraints
         for (int k = 0; k < n; k++) {
             int i, j, e;
             scanf("%d %d %d", &i, &j, &e);
             
+            all_vars.push_back(i);
+            all_vars.push_back(j);
+            
             if (e == 1) {
-                dsu.unite(i, j);
+                equalities.push_back({i, j});
             } else {
-                inequalities.push_back({{i, j}, e});
+                inequalities.push_back({i, j});
             }
+        }
+        
+        // Coordinate compression
+        sort(all_vars.begin(), all_vars.end());
+        all_vars.erase(unique(all_vars.begin(), all_vars.end()), all_vars.end());
+        
+        map<int, int> var_to_idx;
+        for (int idx = 0; idx < (int)all_vars.size(); idx++) {
+            var_to_idx[all_vars[idx]] = idx;
+        }
+        
+        DSU dsu(all_vars.size());
+        
+        // Process all equality constraints
+        for (const auto& eq : equalities) {
+            int idx_i = var_to_idx[eq.first];
+            int idx_j = var_to_idx[eq.second];
+            dsu.unite(idx_i, idx_j);
         }
         
         // Check all inequality constraints
         bool possible = true;
-        for (const auto& inequality : inequalities) {
-            int i = inequality.first.first;
-            int j = inequality.first.second;
-            if (dsu.same(i, j)) {
+        for (const auto& ineq : inequalities) {
+            int idx_i = var_to_idx[ineq.first];
+            int idx_j = var_to_idx[ineq.second];
+            if (dsu.same(idx_i, idx_j)) {
                 possible = false;
                 break;
             }
